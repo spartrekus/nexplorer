@@ -15,12 +15,14 @@
 #include <unistd.h> 
 #include <time.h> 
 
+
 int rows, cols; 
 int  curs_y;
 int  curs_x;
 int  user_sel = 1;
 int  user_scrolly =0 ;
 char user_fileselection[PATH_MAX]; 
+char filefilter[PATH_MAX]; 
 int  tc_det_dir_type = 0;
 
 void gfxbox( int y1, int x1, int y2, int x2 )
@@ -71,15 +73,8 @@ char *strrlf(char *str)
       char *r = malloc( sizeof ptr );
       return r ? memcpy(r, ptr, siz ) : NULL;
 }
-/*
-  1.mvprintw( rows-2,cols-9, "%s" , strcut( "hello" , 3 , 6 ) );
-                                              3456 
-       > it outputs lolu 
-  2.now it gives:
-  mvprintw( rows-2,cols-9, "%s" , strcut( "hello" , 3 , 6 ) );
-                                             3456       
-       > it outputs llol   (which might be okay)
-*/
+
+
 char *strcut( char *str , int myposstart, int myposend )
 {  
       char ptr[strlen(str)+1];
@@ -289,6 +284,39 @@ return fileordir;
 
 
 
+///////////////// new
+char *fextension(char *str)
+{ 
+    char ptr[strlen(str)+1];
+    int i,j=0;
+    //char ptrout[strlen(ptr)+1];  
+    char ptrout[25];
+
+    if ( strstr( str, "." ) != 0 )
+    {
+      for(i=strlen(str)-1 ; str[i] !='.' ; i--)
+      {
+        if ( str[i] != '.' ) 
+            ptr[j++]=str[i];
+      } 
+      ptr[j]='\0';
+
+      j = 0; 
+      for( i=strlen(ptr)-1 ;  i >= 0 ; i--)
+            ptrout[j++]=ptr[i];
+      ptrout[j]='\0';
+    }
+    else
+     ptrout[0]='\0';
+
+    size_t siz = sizeof ptrout ; 
+    char *r = malloc( sizeof ptrout );
+    return r ? memcpy(r, ptrout, siz ) : NULL;
+}
+
+
+
+
 
 
 ////////////////////////////////
@@ -335,6 +363,7 @@ void crossgraphvga_init(void)
   init_pair(11, COLOR_BLUE, COLOR_WHITE);
   init_pair(12, COLOR_BLUE, COLOR_MAGENTA);
   init_pair(13, COLOR_CYAN, COLOR_BLACK);
+  init_pair(14, COLOR_BLUE, COLOR_CYAN);
 
 }
 
@@ -466,6 +495,19 @@ void printdir()
         if ( entrycounter <= user_scrolly )
               continue;
 
+        if ( strcmp( filefilter , "" ) != 0 )
+        { 
+               if ( strstr( dp->d_name, filefilter ) != 0 )
+               //     strncpy( idata[ n++ ] , dp->d_name , 250 );
+               {
+               }
+               else
+                  continue;
+        }
+        //else  
+        //      strncpy( idata[ n++ ] , dp->d_name , 250 );
+
+
         if (  dp->d_name[0] !=  '.' ) 
         if (  strcmp( dp->d_name, "." ) != 0 )
         if (  strcmp( dp->d_name, ".." ) != 0 )
@@ -517,6 +559,111 @@ void printdir()
 
 
 
+
+
+
+char *fbasename(char *name)
+{
+  char *base = name;
+  while (*name)
+    {
+      if (*name++ == '/')
+	{
+	  base = name;
+	}
+    }
+  return (base);
+}
+
+
+
+
+
+
+void gfxframe( int y1, int x1, int y2, int x2 )
+{
+    int foo, fooy , foox ;
+    foo = x1;
+    for( fooy = y1 ; fooy <= y2 ; fooy++) 
+        mvaddch( fooy , foo , ACS_VLINE );
+    foo = x2;
+    for( fooy = y1 ; fooy <= y2 ; fooy++) 
+         mvaddch( fooy , foo , ACS_VLINE );
+    foo = y1;
+    for( foox = x1 ; foox <= x2 ; foox++) 
+         mvaddch( foo , foox , ACS_HLINE );
+    foo = y2;
+    for( foox = x1 ; foox <= x2 ; foox++) 
+         mvaddch( foo , foox , ACS_HLINE );
+    mvaddch( y1 , x1 , ACS_ULCORNER );
+    mvaddch( y1 , x2 , ACS_URCORNER );
+    mvaddch( y2 , x1 , ACS_LLCORNER );
+    mvaddch( y2 , x2 , ACS_LRCORNER );
+}
+
+
+
+
+
+   ////////////////////////////////////
+   void printfile( char *ttuxfile )
+   {
+       int posyy = 2 ;  
+       int zui = 0 ;  FILE *fpsource;  char ptrout[PATH_MAX];
+       //color_set( 7, NULL );  
+       attron( A_REVERSE );
+       gfxbox( 0, cols/2-2, rows-1, cols-1 );
+       gfxframe( 0, cols/2-2, rows-1, cols-1 );
+           if ( fexist( ttuxfile ) == 1 )
+           {  
+             mvprintw( 0, cols/2, "[FILE: %s]", fbasename( ttuxfile ) );
+             posyy = 2;
+             fpsource = fopen( ttuxfile , "r");
+             while(  !feof(fpsource) )
+             {
+                 if ( !feof(fpsource) )
+                 {
+                   fgets( ptrout , PATH_MAX , fpsource ); 
+                   if ( posyy <= rows-3 )
+                    for(zui=0; ptrout[zui]!='\0'; zui++)
+                     if ( ptrout[zui] != '\n' )
+                      if ( zui <=  cols/2 -2 )
+                        mvprintw( posyy, cols/2 + zui , "%c", ptrout[zui] );
+                   posyy++;
+                 }
+             }
+             fclose(fpsource);
+           }
+   }
+
+
+
+/////////////////////////////////////
+/////////////////////////////////////
+void printfile_viewer( char *filex )
+{
+    char foostr[PATH_MAX];
+    char foocwd[PATH_MAX];
+    int ch ; 
+                      strncpy( foostr , getcwd( foocwd, PATH_MAX ), PATH_MAX );
+                      if ( fexist( filex ) == 1 )
+                      {
+                        color_set( 14, NULL ); attron( A_BOLD ); attron( A_REVERSE );
+                        printfile( filex ); 
+                        ch = getch(); 
+                        color_set( 0, NULL ); attroff( A_BOLD ); attroff( A_REVERSE );
+                        if       ( ch == 'v' )  ncurses_runwith( " vim " , filex );
+                        else if  ( ch == 'n' )  ncurses_runwith( " screen -d -m nedit  " , filex );
+                        else if  ( ch == 'r' )  ncurses_runwith( " tcview  " , filex );
+                        else if  ( ch == '!' )  ncurses_runwith( strninput("") , filex );
+                      }
+                      chdir( foostr );
+}
+
+
+
+
+
 //////////////////////////////////////////////
 //////////////////////////////////////////////
 //////////////////////////////////////////////
@@ -528,8 +675,9 @@ int main( int argc, char *argv[])
 
   int printdir_show = 1;
   crossgraphvga_init();
-  strncpy( user_fileselection, "", PATH_MAX );
   char foocmd[PATH_MAX];
+  strncpy( user_fileselection, "", PATH_MAX );
+  strncpy( filefilter, "", PATH_MAX );
 
   getmaxyx( stdscr, rows, cols );
   int i, j; int gameover = 0;
@@ -538,6 +686,8 @@ int main( int argc, char *argv[])
   ch = 0;
   while( gameover == 0)
   {
+     getmaxyx( stdscr, rows, cols);
+
      if ( user_sel <= 1 ) user_sel = 1;
      if ( user_scrolly <= 0 ) user_scrolly = 0;
 
@@ -639,12 +789,45 @@ int main( int argc, char *argv[])
               user_sel = 1;
               user_scrolly =0 ;
               break;
-           case 10:
            case 'l':
               chdir( user_fileselection ); 
               user_sel = 1;
               user_scrolly =0 ;
               break;
+
+           case 10:
+              if ( fexist( user_fileselection ) == 2 )
+              {
+                  chdir( user_fileselection ); 
+                  user_sel = 1;
+                  user_scrolly =0 ;
+              }
+              else if ( fexist( user_fileselection ) == 1 )
+              {
+                if ( strcmp( fextension( user_fileselection ) , "png" ) == 0 )
+                       ncurses_runwith( " feh -FZ   " , user_fileselection ); 
+                else if ( strcmp( fextension( user_fileselection ) , "PNG" ) == 0 )
+                       ncurses_runwith( " feh -FZ   " , user_fileselection ); 
+                else if ( strcmp( fextension( user_fileselection ) , "JPG" ) == 0 )
+                       ncurses_runwith( " feh -FZ   " , user_fileselection ); 
+
+                else if ( strcmp( fextension( user_fileselection ) , "jpg" ) == 0 )
+                       ncurses_runwith( " feh -FZ   " , user_fileselection ); 
+
+                else if ( strcmp( fextension( user_fileselection ) , "eps" ) == 0 )
+                       ncurses_runwith( " epsview   " , user_fileselection ); 
+
+                else if ( strcmp( fextension( user_fileselection ) , "pdf" ) == 0 )
+                {
+                     if ( strcmp( getenv( "TERM" ) , "linux" ) == 0 ) 
+                       ncurses_runwith( " fbgs -r 270  " , user_fileselection ); 
+                     else
+                       ncurses_runwith( " screen -d -m mupdf " , user_fileselection ); 
+                }
+              }
+              break;
+
+
            case KEY_HOME:
            case 'g':
              curs_x =1 ;
@@ -690,11 +873,18 @@ int main( int argc, char *argv[])
               ncurses_runwith( strninput("") , user_fileselection ); 
               break;
            case '$':
-              nruncmd( " bash " );
+              nruncmd( strninput("") );
               break;
+
+           case 'o':
+              if ( fexist( user_fileselection ) == 1 ) 
+                printfile_viewer(  user_fileselection ); 
+              break;
+
            case 'r':
               ncurses_runwith( " tcview  " , user_fileselection ); 
               break;
+
            case 'v':
               ncurses_runwith( " vim  " , user_fileselection ); 
               break;
@@ -704,6 +894,17 @@ int main( int argc, char *argv[])
               else
                 tc_det_dir_type = 0;
               break;
+
+           case 'f':
+             attroff( A_REVERSE ); 
+             strncpy( filefilter, strninput( "" ), PATH_MAX );
+             //selection = 0;  scrolly=0;
+             //loadlist();
+             curs_x =1 ;
+             curs_y =1 ;
+             user_sel =1 ;
+             user_scrolly =0 ;
+             break;
 
       }
   }
