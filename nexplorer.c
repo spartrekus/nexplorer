@@ -94,6 +94,24 @@ char *strcut( char *str , int myposstart, int myposend )
 
 
 
+////////////////////////////////
+void ncurses_runwait( char *thecmd , char *thestrfile  ) 
+{
+       char cmdi[PATH_MAX];
+       def_prog_mode();
+       endwin();
+       printf( "<APP-CMD: Command...>\n" );
+       strncpy( cmdi , "  " , PATH_MAX );
+       strncat( cmdi , thecmd , PATH_MAX - strlen( cmdi ) -1 );
+       strncat( cmdi , " " , PATH_MAX - strlen( cmdi ) -1 );
+       strncat( cmdi , " \"" , PATH_MAX - strlen( cmdi ) -1 );
+       strncat( cmdi , thestrfile , PATH_MAX - strlen( cmdi ) -1 );
+       strncat( cmdi , "\" " , PATH_MAX - strlen( cmdi ) -1 );
+       strncat( cmdi , " ; read keypr " , PATH_MAX - strlen( cmdi ) -1 );
+       printf( "<APP-CMD: %s>\n", cmdi );
+       system( cmdi );
+       reset_prog_mode();
+}
 
 
 ////////////////////////////////
@@ -655,7 +673,8 @@ void printfile_viewer( char *filex )
                         printfile( filex ); 
                         ch = getch(); 
                         color_set( 0, NULL ); attroff( A_BOLD ); attroff( A_REVERSE );
-                        if       ( ch == 'v' )  ncurses_runwith( " vim " , filex );
+                        if            ( ch == 'V' )  ncurses_runwith( " vim.tiny  " , filex );
+                        else if       ( ch == 'v' )  ncurses_runwith( " vim " , filex );
                         else if  ( ch == 'n' )  ncurses_runwith( " screen -d -m nedit  " , filex );
                         else if  ( ch == 'r' )  ncurses_runwith( " tcview  " , filex );
                         else if  ( ch == '!' )  ncurses_runwith( strninput("") , filex );
@@ -861,6 +880,9 @@ int main( int argc, char *argv[])
                      nruncmd( " nc  " );
               else if  ( strcmp( foocmd, "display" ) == 0 )  
                    { mvcenter( 0, "INFORMATION" ); mvprintw( 2, 0, "DISPLAY: %d %d", rows, cols ); getch();   }
+              else if  ( strcmp( foocmd, "du" ) == 0 )  
+                     ncurses_runwait( " du -hs " ,  user_fileselection );
+
               else if  ( strcmp( foocmd, "home" ) == 0 )  
                    chdir( getenv( "HOME" ) );
               break;
