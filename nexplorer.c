@@ -646,9 +646,12 @@ void printfile_viewer( char *filex )
     char foocwd[PATH_MAX];
     int ch ; 
                       strncpy( foostr , getcwd( foocwd, PATH_MAX ), PATH_MAX );
+                      color_set( 0, NULL ); attroff( A_BOLD ); attroff( A_REVERSE );
                       if ( fexist( filex ) == 1 )
                       {
-                        color_set( 14, NULL ); attron( A_BOLD ); attron( A_REVERSE );
+                        color_set( 14, NULL ); 
+                        if ( strcmp( getenv( "TERM" ) , "linux" ) == 0 ) attron( A_BOLD ); 
+                        attron( A_REVERSE );
                         printfile( filex ); 
                         ch = getch(); 
                         color_set( 0, NULL ); attroff( A_BOLD ); attroff( A_REVERSE );
