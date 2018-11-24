@@ -817,6 +817,8 @@ int main( int argc, char *argv[])
               user_scrolly =0 ;
               break;
 
+
+
            case 10:
               if ( fexist( user_fileselection ) == 2 )
               {
@@ -841,9 +843,9 @@ int main( int argc, char *argv[])
 
                 else if ( strcmp( fextension( user_fileselection ) , "pdf" ) == 0 )
                 {
-                     if ( strcmp( getenv( "TERM" ) , "linux" ) == 0 ) 
-                       ncurses_runwith( " fbgs -r 270  " , user_fileselection ); 
-                     else
+                     //if ( strcmp( getenv( "TERM" ) , "linux" ) == 0 ) 
+                     //  ncurses_runwith( " fbgs -r 270  " , user_fileselection ); 
+                     //else
                        ncurses_runwith( " screen -d -m mupdf " , user_fileselection ); 
                 }
               }
